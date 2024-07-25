@@ -1,0 +1,117 @@
+# 👋 “Hey” from the Praxis team
+
+# Vela tests, builds, and packages Praxis output into an nginx webserver within a Docker image.
+#
+# 👍 Praxis Hosting Guide @ https://praxis.prod.minhenry.com/guides/hosting
+# 🤙 Template Tutorials @ https://go-vela.github.io/docs/templates/tutorials/
+
+version: '1'
+steps:
+  - name: populate_docker_credentials
+    image: docker.minhenry.com/managed/vela-plugins/artifactory-managed-auth:v1.3.1
+    parameters:
+      auth_server: https://artifactorytokenmanager.prod.minhenry.com
+      log_level: debug
+  - name: build-praxis
+    image: hub.docker.minhenry.com/node:20.9.0
+    commands:
+      - npm install
+      - npm run lint
+      - npm test
+      - npm run build
+
+  - name: dev-docker-publish
+    image: docker.minhenry.com/vela-plugins/kaniko:v0.15.0-1
+    ruleset:
+      branch:
+        - master
+      event:
+        - push
+        - pull_request
+    parameters:
+      registry: docker.minhenry.com
+      repo: docker.minhenry.com/managed/connectedcommerce/ccshipadmin
+      tags:
+        - b${BUILD_NUMBER}-${BUILD_COMMIT:0:8}
+
+  - name: deploy-dev-artifact
+    image: docker.minhenry.com/icelab/drone-tap-pipeline-watch:v3.0.8
+    secrets:
+      - plugin_token
+    ruleset:
+      branch:
+        - master
+      event:
+        - push
+    pull: not_present
+    parameters:
+      application: ccshipadmin
+      clusters: ccshipadmin-stage
+      deploy: true
+      env: dev
+      tag: b${BUILD_NUMBER}-${BUILD_COMMIT:0:8}
+      timeout: 15
+
+  - name: test-dev-deployment
+    image: centos
+    ruleset:
+      branch:
+        - master
+      event:
+        - push
+    commands:
+      - curl -k https://ccshipadmin-stage.dev.minhenry.com/
+
+  - name: prod-docker-publish
+    image: docker.minhenry.com/vela-plugins/kaniko:v0.15.0-1
+    ruleset:
+      branch:
+        - master
+      event:
+        - tag
+    parameters:
+      registry: docker.minhenry.com
+      repo: docker.minhenry.com/managed/connectedcommerce/ccshipadmin
+      tags:
+        - release-b${BUILD_NUMBER}-${BUILD_COMMIT:0:8}
+
+  - name: bubble-bath-image-clean-artifactory
+    image: docker.minhenry.com/bubble-bath/drone-bubblebath:test
+    ruleset:
+      branch:
+        - master
+      event:
+        - push
+    pull: always
+    parameters:
+      bubblebath_url: https://bubblebath.dev.minhenry.com
+      comparator: tap-build-tag
+      ignore:
+        - latest
+      keep: "25"
+      registry_url: https://docker.minhenry.com
+      repo: managed/connectedcommerce/ccshipadmin
+
+  - name: publish-build-failure-alert
+    image: docker.minhenry.com/vela-plugins/slack:2.3
+    pull: not_present
+    secrets: [ slack_webhook ]
+    ruleset:
+      event: [ push,tag ]
+      branch:
+        - master
+      status: [ failure ]
+    parameters:
+      icon_emoji: ":go_vela:"
+      text: ":x: Repo : {{ .RepositoryName }}. Build # : {{ .BuildNumber }} failed.
+              \n click on the link for details: :go_vela: {{ .BuildLink }}"
+
+secrets:
+  - name: slack_webhook
+    key: ConnectedCommerce/ccshipadmin/slack_webhook
+    engine: native
+    type: repo
+  - name: plugin_token
+    key: ConnectedCommerce/ccshipadmin/tap_token
+    engine: native
+    type: repo

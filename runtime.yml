@@ -1,0 +1,3 @@
+config:
+  - key: config.json # The custom Key name provided within TAP
+    destination: /usr/share/nginx/html/config.json # A symlink will be created at this path to /tap/config/${key}

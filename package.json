@@ -1,0 +1,47 @@
+{
+  "name": "ccshipadmin",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@enterprise-ui/canvas-ui-css": "7.5.0",
+    "@enterprise-ui/canvas-ui-react": "7.5.0",
+    "@enterprise-ui/component-font": "1.1.1",
+    "@fortawesome/fontawesome-svg-core": "6.4.0",
+    "@fortawesome/free-solid-svg-icons": "5.15.3",
+    "@fortawesome/react-fontawesome": "0.2.0",
+    "@praxis/config-defaults": "20.1.0",
+    "@testing-library/react": "14.1.2",
+    "praxis-scripts": "20.1.0",
+    "react-fontawesome": "1.7.1"
+  },
+  "scripts": {
+    "start": "praxis-scripts start",
+    "build": "praxis-scripts build",
+    "test": "praxis-scripts test",
+    "eject": "praxis-scripts eject",
+    "format": "praxis-scripts format 'src/**/*.{js,jsx}'",
+    "lint": "praxis-scripts lint 'src/**/*.{js,jsx}'",
+    "release": "praxis-scripts release",
+    "inspect": "praxis-scripts inspect",
+    "cypress:open": "cypress open",
+    "cypress:run": "npx cypress run --browser chrome",
+    "cypress:run-dev": "npx cypress run --browser chrome --config baseUrl=https://ccshipadmin-stage.dev.minhenry.com",
+    "cypress:run-recorded": "npx cypress run --browser chrome --record --key 49dd1ce3-2e29-4c96-8a93-3abef1bf8f57"
+  },
+  "browserslist": {
+    "development": [
+      "last 2 chrome versions",
+      "last 2 firefox versions"
+    ],
+    "production": [
+      "last 2 chrome versions",
+      "last 2 firefox versions"
+    ]
+  },
+  "devDependencies": {
+    "appmod-enterprise-template": "2.2.1",
+    "cypress": "7.4.0",
+    "eslint-plugin-cypress": "2.11.3"
+  },
+  "overrides": {}
+}
